@@ -321,381 +321,207 @@ void PrintTree(TreeNode* node, int sh=0)
     if(node->sibling) PrintTree(node->sibling, sh);
 }
 
-deque<TokenType>Tokens;
-TokenType CToken;
+deque<pair<TokenType,string>>Tokens;
+pair<TokenType,string> CToken;
 
 
-TokenType gettoken();
+pair<TokenType,string>  gettoken();
 bool match(TokenType);
-TreeNode *root = nullptr;
 
-TreeNode* program();
-TreeNode* stmtseq();
-TreeNode* stmt();
-TreeNode* ifstmt();
-TreeNode* exp();
-TreeNode* repeatstmt();
-TreeNode* readstmt();
-TreeNode* mathexpr();
-TreeNode* term();
-TreeNode* factor();
-TreeNode* newexpr();
-TreeNode* writestmt();
-TreeNode* assignstmt();
+void program();
+void stmtseq();
+void stmt();
+void ifstmt();
+void exp();
+void repeatstmt();
+void readstmt();
+void mathexpr();
+void term();
+void factor();
+void newexpr();
+void writestmt();
+void assignstmt();
 
 
 // program -> stmtseq
-TreeNode* program(){
+void program(){
     CToken = gettoken();
-    root = stmtseq();
-    return root;
+    stmtseq();
 }
 
-TreeNode * stmtseq()
-{
-    TreeNode * t = stmt();
-    TreeNode * p = t;
-    while ((CToken!=ENDFILE) && (CToken!=END) && (CToken!=ELSE) && (CToken!=UNTIL))
+//stmtseq -> stmt { ; stmt }
+void stmtseq(){
+    stmt();
+    while (CToken.first!=ENDFILE && CToken.first!=END && CToken.first!=UNTIL)
     {
-        TreeNode * q;
         match(SEMI_COLON);
-        q = stmt();
-        if (q!=nullptr) {
-            if (t==nullptr) t = p = q;
-            else /* now p cannot be NULL either */
-            {
-                p->sibling = q;
-                p = q;
-            }
-        }
+        stmt();
     }
-    return t;
 }
 
+// stmt -> ifstmt | repeatstmt | assignstmt | readstmt | writestmt
+void stmt(){
 
-TreeNode * stmt()
-{ TreeNode * t = NULL;
-    switch (CToken) {
-        case IF : t = ifstmt(); break;
-        case REPEAT : t = repeatstmt(); break;
-        case ID : t = assignstmt(); break;
-        case READ : t = readstmt(); break;
-        case WRITE : t = writestmt(); break;
-        default :
-            CToken = gettoken();
+    switch (CToken.first)
+    {
+        case IF:
+            cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+            ifstmt();
             break;
-    } /* end case */
-    return t;
-}
-
-TreeNode * ifstmt()
-{ TreeNode * t = new TreeNode;
-    match(IF);
-    if (t!=NULL) t->child[0] = exp();
-    match(THEN);
-    if (t!=NULL) t->child[1] = stmtseq();
-    if (CToken==ELSE) {
-        match(ELSE);
-        if (t!=NULL) t->child[2] = stmtseq();
-    }
-    match(END);
-    return t;
-}
-
-TreeNode * repeatstmt()
-{ TreeNode * t = new TreeNode;
-    match(REPEAT);
-    if (t!=NULL) t->child[0] = stmtseq();
-    match(UNTIL);
-    if (t!=NULL) t->child[1] = exp();
-    return t;
-}
-
-TreeNode * assignstmt()
-{ TreeNode * t = new TreeNode;
-    if ((t!=NULL) && (CToken==ID)){
-        t->id = "tmp";
-    }
-    match(ID);
-    match(ASSIGN);
-    if (t!=NULL) t->child[0] = exp();
-    return t;
-}
-
-TreeNode * readstmt()
-{ TreeNode * t =new TreeNode;
-    match(READ);
-    if ((t!=NULL) && (CToken==ID))
-        t->id="ahmed";
-    match(ID);
-    return t;
-}
-
-TreeNode * writestmt()
-{ TreeNode * t = new TreeNode;
-    match(WRITE);
-    if (t!=NULL) t->child[0] = exp();
-    return t;
-}
-
-TreeNode * exp()
-{ TreeNode * t = mathexpr();
-    if ((CToken==LESS_THAN)||(CToken==EQUAL)) {
-        TreeNode * p = new TreeNode;
-        if (p!=NULL) {
-            p->child[0] = t;
-            p->oper = CToken;
-            t = p;
-        }
-        match(CToken);
-        if (t!=NULL)
-            t->child[1] = mathexpr();
-    }
-    return t;
-}
-
-TreeNode * mathexpr(void)
-{ TreeNode * t = term();
-    while ((CToken==PLUS)||(CToken==MINUS))
-    { TreeNode * p = new TreeNode;
-        if (p!=NULL) {
-            p->child[0] = t;
-            p->oper = CToken;
-            t = p;
-            match(CToken);
-            t->child[1] = term();
-        }
-    }
-    return t;
-}
-
-TreeNode * term()
-{ TreeNode * t = factor();
-    while ((CToken==TIMES)||(CToken==DIVIDE))
-    { TreeNode * p = new TreeNode;
-        if (p!=NULL) {
-            p->child[0] = t;
-            p->oper = CToken;
-            t = p;
-            match(CToken);
-            p->child[1] = factor();
-        }
-    }
-    return t;
-}
-
-TreeNode * factor()
-{ TreeNode * t = NULL;
-    switch (CToken) {
-        case NUM :
-            t = new TreeNode;
-            if ((t!=NULL) && (CToken==NUM))
-                t->num = 5;
-            match(NUM);
+        case REPEAT:
+            cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+            repeatstmt();
             break;
-        case ID :
-            t = new TreeNode;
-            if ((t!=NULL) && (CToken==ID))
-                t->id = "sa";
-            match(ID);
+        case ID:
+            cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+            assignstmt();
             break;
-        case LEFT_PAREN :
-            match(LEFT_PAREN);
-            t = exp();
-            match(RIGHT_PAREN);
+        case READ:
+            cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+            readstmt();
+            break;
+        case WRITE:
+            cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+            writestmt();
             break;
         default:
-            CToken = gettoken();
+            match(CToken.first);
             break;
     }
-    return t;
 }
 
-// stmtseq -> stmt { ; stmt }
-//TreeNode* stmtseq(){
-//    cout<<TokenTypeStr[CToken]<<endl;
-//    TreeNode* newNode = stmt();
-//    root->child[0]->newNode;
-//    while (CToken!=ENDFILE && CToken!=END && CToken!=UNTIL)
-//    {
-//        match(SEMI_COLON);
-//        newNode->child[0] = stmt();
-//    }
-//    return newNode;
-//}
-//
-//// stmt -> ifstmt | repeatstmt | assignstmt | readstmt | writestmt
-//TreeNode* stmt(){
-//    TreeNode *NewNode = new TreeNode();
-//
-//    switch (CToken)
-//    {
-//        case IF:
-//            cout<<TokenTypeStr[CToken]<<endl;
-//            NewNode->node_kind = IF_NODE;
-//            ifstmt();
-//            break;
-//        case REPEAT:
-//            cout<<TokenTypeStr[CToken]<<endl;
-//            NewNode->node_kind = REPEAT_NODE;
-//            repeatstmt();
-//            break;
-//        case ASSIGN:
-//            NewNode->node_kind = ASSIGN_NODE;
-//            cout<<TokenTypeStr[CToken]<<endl;
-//            assignstmt();
-//            break;
-//        case READ:
-//            NewNode->node_kind = READ_NODE;
-//            cout<<TokenTypeStr[CToken]<<endl;
-//            readstmt();
-//            break;
-//        case WRITE:
-//            NewNode->node_kind = WRITE_NODE;
-//            cout<<TokenTypeStr[CToken]<<endl;
-//            writestmt();
-//            break;
-//        default:
-//            cout<<"        "<<TokenTypeStr[CToken]<<endl;
-//            match(CToken);
-//            NewNode->node_kind = ASSIGN_NODE;
-//            break;
-//    }
-//    return NewNode;
-//}
-//
-//// ifstmt -> if expr then stmtseq [ else stmtseq ] end
-//TreeNode* ifstmt(){
-//    TreeNode *NewNode = new TreeNode();
-//
-//    cout<<TokenTypeStr[CToken]<<endl;
-//    match(IF);// c = NUM
-//
-//    exp();
-//
-//    cout<<TokenTypeStr[CToken]<<endl;
-//    match(THEN);
-//
-//    stmtseq();
-//
-//    if (CToken==ELSE){
-//        cout<<TokenTypeStr[CToken]<<endl;
-//        stmtseq();
-//    }
-//
-//    match(END);
-//}
-//
-//// repeatstmt -> repeat stmtseq until expr
-//TreeNode* repeatstmt(){
-//    cout<<TokenTypeStr[CToken]<<endl;
-//    match(REPEAT);
-//
-//    stmtseq();
-//
-//    match(UNTIL);
-//
-//    exp();
-//}
-//
-//// assignstmt -> identifier := expr
-//TreeNode* assignstmt(){
-//    match(ID);
-//    cout<<TokenTypeStr[CToken]<<endl;
-//
-//    match(ASSIGN);
-//    exp();
-//}
-//
-//// readstmt -> read identifier
-//TreeNode* readstmt(){
-//    match(READ);
-//    cout<<TokenTypeStr[CToken]<<endl;
-//    match(ID);//c = SEMI_COLM
-//}
-//
-//// writestmt -> write expr
-//TreeNode* writestmt(){
-//    cout<<TokenTypeStr[CToken]<<endl;
-//    match(WRITE);
-//    exp();
-//}
-//
-//// expr -> mathexpr [ (<|=) mathexpr ]
-//TreeNode* exp(){
-//    mathexpr();
-//    if (CToken==LESS_THAN || CToken==EQUAL){
-//        cout<<TokenTypeStr[CToken]<<endl;
-//        match(CToken);
-//        mathexpr();
-//    }
-//}
-//
-//// mathexpr -> term { (+|-) term }    left associative
-//TreeNode* mathexpr(){
-//    term();
-//
-//    if (CToken==PLUS)cout<<"+\n";
-//    if (CToken==MINUS)cout<<"-\n";
-//    while (match(PLUS) || match((MINUS))){
-//        cout<<TokenTypeStr[CToken]<<endl;
-//        match(CToken);
-//        term();
-//    }
-//}
-//
-//// term -> factor { (*|/) factor }    left associative
-//TreeNode* term(){
-//    factor();
-//    while (match(TIMES) || match(DIVIDE)){
-//        cout<<TokenTypeStr[CToken]<<endl;
-//        match(CToken);
-//        factor();
-//    }
-//}
-//
-//// factor -> newexpr { ^ newexpr }    right associative
-//TreeNode* factor(){
-//    newexpr();
-//    while (match(POWER)){
-//        cout<<TokenTypeStr[CToken]<<endl;
-//        newexpr();
-//    }
-//}
-//
-//// newexpr -> ( mathexpr ) | number | identifier
-//TreeNode* newexpr(){
-//    if (match(LEFT_PAREN)){
-//        mathexpr();
-//        cout<<TokenTypeStr[CToken]<<endl;
-//        match(RIGHT_PAREN);
-//    }else if(match(NUM)){
-//        cout<<TokenTypeStr[NUM]<<endl;
-//
-//    }else if(match(ID)){
-//        cout<<TokenTypeStr[ID]<<endl;
-//    }else {
-//        cout<<TokenTypeStr[CToken]<<endl;
-//        match(CToken);
-//    }
-//}
+// ifstmt -> if expr then stmtseq [ else stmtseq ] end
+void ifstmt(){
+
+    match(IF);// c = NUM
+
+    exp();
+
+    cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+    match(THEN);
+
+    stmtseq();
+
+    if (CToken.first==ELSE){
+        cout<<TokenTypeStr[CToken.first]<<endl;
+        stmtseq();
+    }
+
+    match(END);
+}
+
+// repeatstmt -> repeat stmtseq until expr
+void repeatstmt(){
+
+    match(REPEAT);
+
+    stmtseq();
+
+    match(UNTIL);
+
+    exp();
+}
+
+// assignstmt -> identifier := expr
+void assignstmt(){
+    match(ID);
+    cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+    match(ASSIGN);
+    exp();
+}
+
+// readstmt -> read identifier
+void readstmt(){
+    match(READ);
+    cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+    match(ID);//c = SEMI_COLM
+}
+
+// writestmt -> write expr
+void writestmt(){
+    match(WRITE);
+    exp();
+}
+
+// expr -> mathexpr [ (<|=) mathexpr ]
+void exp(){
+    mathexpr();
+    if (CToken.first==LESS_THAN || CToken.first==EQUAL){
+        cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+        match(CToken.first);
+        mathexpr();
+    }
+}
+
+// mathexpr -> term { (+|-) term }    left associative
+void mathexpr(){
+    term();
+
+    if (CToken.first==PLUS)cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+
+    if (CToken.first==MINUS)cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
 
 
+    while (match(PLUS) || match((MINUS))){
+        match(CToken.first);
+        term();
+    }
+}
+
+// term -> factor { (*|/) factor }    left associative
+void term(){
+    factor();
+
+    if (CToken.first==TIMES)cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+    if (CToken.first==DIVIDE)cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
 
 
+    while (match(TIMES) || match(DIVIDE)){
+//        match(CToken.first);
+        factor();
+    }
+}
+
+// factor -> newexpr { ^ newexpr }    right associative
+void factor(){
+    newexpr();
+    if (CToken.first==POWER)cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+    while (match(POWER)){
+        newexpr();
+    }
+}
+
+// newexpr -> ( mathexpr ) | number | identifier
+void newexpr(){
+    if (CToken.first==LEFT_PAREN){
+        cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+        match(LEFT_PAREN);
+        mathexpr();
+
+        cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+        match(RIGHT_PAREN);
+    }else if(CToken.first==NUM){
+        cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+        match(NUM);
+    }else if(CToken.first==ID){
+        cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+        match(ID);
+    }else {
+        cout<<TokenTypeStr[CToken.first]<<" | "<<CToken.second<<endl;
+        match(CToken.first);
+    }
+}
 
 
-
-
-TokenType gettoken(){
+pair<TokenType,string> gettoken(){
     if (Tokens.empty())exit(0);
-    TokenType t = Tokens.front();
+    auto t = Tokens.front();
     Tokens.pop_front();
     return t;
 }
 
 bool match(TokenType current){
-    if (CToken==current){
+    if (CToken.first==current){
         CToken = gettoken();
         return 1;
     }else
@@ -717,12 +543,12 @@ int main()
         GetNextToken(compiler,token);
         compiler->out_file.Out(token->str);
 
-        Tokens.push_back(token->type);
+        Tokens.emplace_back(token->type,token->str);
     }
 ///////////////////////////
     freopen("output.txt", "r", stdin);
     freopen("Parser.txt", "w", stdout);
 
-    TreeNode *root = program();
-    PrintTree(root);
+    program();
+
 }
